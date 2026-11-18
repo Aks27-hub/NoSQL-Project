@@ -1,0 +1,129 @@
+{
+  "contract_version": "2.0",
+  "kind": "final_results",
+  "pipeline_name": "hive",
+  "run_id": "hive-20261118T140512-3fa9c1",
+  "last_batch_id": 2,
+  "final_aggregation_seconds": 7.82,
+  "totals": {
+    "record_count": 17,
+    "parsed_count": 14,
+    "malformed_count": 3
+  },
+  "results": {
+    "q1_daily_traffic": [
+      {
+        "log_date": "1995-07-01",
+        "status_code": 200,
+        "request_count": 7,
+        "total_bytes": 27056
+      },
+      {
+        "log_date": "1995-07-01",
+        "status_code": 304,
+        "request_count": 2,
+        "total_bytes": 0
+      },
+      {
+        "log_date": "1995-07-01",
+        "status_code": 404,
+        "request_count": 2,
+        "total_bytes": 0
+      },
+      {
+        "log_date": "1995-07-01",
+        "status_code": 500,
+        "request_count": 1,
+        "total_bytes": 0
+      },
+      {
+        "log_date": "1995-07-02",
+        "status_code": 304,
+        "request_count": 1,
+        "total_bytes": 0
+      },
+      {
+        "log_date": "1995-07-02",
+        "status_code": 403,
+        "request_count": 1,
+        "total_bytes": 0
+      }
+    ],
+    "q2_top_resources": [
+      {
+        "resource_path": "/shuttle/countdown/",
+        "request_count": 5,
+        "total_bytes": 15940,
+        "distinct_host_count": 5
+      },
+      {
+        "resource_path": "/images/NASA-logosmall.gif",
+        "request_count": 3,
+        "total_bytes": 786,
+        "distinct_host_count": 3
+      },
+      {
+        "resource_path": "/cgi-bin/imagemap/countdown?99,176",
+        "request_count": 1,
+        "total_bytes": 0,
+        "distinct_host_count": 1
+      },
+      {
+        "resource_path": "/history/apollo/",
+        "request_count": 1,
+        "total_bytes": 6245,
+        "distinct_host_count": 1
+      },
+      {
+        "resource_path": "/shuttle/countdown/count.gif",
+        "request_count": 1,
+        "total_bytes": 0,
+        "distinct_host_count": 1
+      },
+      {
+        "resource_path": "/shuttle/countdown/liftoff.html",
+        "request_count": 1,
+        "total_bytes": 0,
+        "distinct_host_count": 1
+      },
+      {
+        "resource_path": "/shuttle/countdown/video/livevideo.gif",
+        "request_count": 1,
+        "total_bytes": 0,
+        "distinct_host_count": 1
+      },
+      {
+        "resource_path": "/shuttle/missions/sts-73/mission-sts-73.html",
+        "request_count": 1,
+        "total_bytes": 4085,
+        "distinct_host_count": 1
+      }
+    ],
+    "q3_hourly_errors": [
+      {
+        "log_date": "1995-07-01",
+        "log_hour": 0,
+        "error_request_count": 2,
+        "total_request_count": 9,
+        "error_rate": 0.222222,
+        "distinct_error_hosts": 1
+      },
+      {
+        "log_date": "1995-07-01",
+        "log_hour": 1,
+        "error_request_count": 1,
+        "total_request_count": 3,
+        "error_rate": 0.333333,
+        "distinct_error_hosts": 1
+      },
+      {
+        "log_date": "1995-07-02",
+        "log_hour": 23,
+        "error_request_count": 1,
+        "total_request_count": 2,
+        "error_rate": 0.5,
+        "distinct_error_hosts": 1
+      }
+    ]
+  }
+}

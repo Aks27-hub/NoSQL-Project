@@ -1,0 +1,11 @@
+{
+  "contract_version": "2.0",
+  "kind": "batch_stats",
+  "pipeline_name": "hive",
+  "run_id": "hive-20261118T140512-3fa9c1",
+  "batch_id": 1,
+  "record_count": 10,
+  "parsed_count": 8,
+  "malformed_count": 2,
+  "batch_runtime_seconds": 3.41
+}
