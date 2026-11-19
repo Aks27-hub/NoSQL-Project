@@ -19,3 +19,12 @@ target/
 .idea/
 .DS_Store
 Thumbs.db
+
+# local notes (not committed)
+ARCHITECTURE.md
+ARCHITECTURE.pdf
+ARCHITECTURE_SIMPLE.md
+ARCHITECTURE_SIMPLE.pdf
+PHASE1_REPORT.md
+PHASE1_REPORT.pdf
+RESULTS.pdf
