@@ -1,0 +1,641 @@
+{
+ "_comment": "Each 'line' is one record (no trailing newline). expected=null means MALFORMED (counted, never dropped). Inside a parsed record, null = SQL NULL. Generated with common/parser.py and reviewed by hand; every engine must reproduce these exactly. Run: python -m unittest tests.test_parser",
+ "vectors": [
+  {
+   "id": "normal_get",
+   "description": "real: the common case",
+   "line": "in24.inetnebr.com - - [01/Aug/1995:00:00:01 -0400] \"GET /shuttle/missions/sts-68/news/sts-68-mcc-05.txt HTTP/1.0\" 200 1839",
+   "expected": {
+    "host": "in24.inetnebr.com",
+    "timestamp": "1995-08-01 00:00:01",
+    "log_date": "1995-08-01",
+    "log_hour": 0,
+    "http_method": "GET",
+    "resource_path": "/shuttle/missions/sts-68/news/sts-68-mcc-05.txt",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 200,
+    "bytes_transferred": 1839
+   }
+  },
+  {
+   "id": "normal_304_zero_bytes",
+   "description": "real: 304 with 0 bytes",
+   "line": "burger.letters.com - - [01/Jul/1995:00:00:11 -0400] \"GET /shuttle/countdown/liftoff.html HTTP/1.0\" 304 0",
+   "expected": {
+    "host": "burger.letters.com",
+    "timestamp": "1995-07-01 00:00:11",
+    "log_date": "1995-07-01",
+    "log_hour": 0,
+    "http_method": "GET",
+    "resource_path": "/shuttle/countdown/liftoff.html",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 304,
+    "bytes_transferred": 0
+   }
+  },
+  {
+   "id": "bytes_dash",
+   "description": "real: bytes '-' becomes 0",
+   "line": "mica.saglac.qc.ca - - [02/Jul/1995:22:28:17 -0400] \"GET /history/apollo/ HTTP/1.0\" 200 -",
+   "expected": {
+    "host": "mica.saglac.qc.ca",
+    "timestamp": "1995-07-02 22:28:17",
+    "log_date": "1995-07-02",
+    "log_hour": 22,
+    "http_method": "GET",
+    "resource_path": "/history/apollo/",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 200,
+    "bytes_transferred": 0
+   }
+  },
+  {
+   "id": "head_method",
+   "description": "real: HEAD request",
+   "line": "ad12-010.compuserve.com - - [01/Jul/1995:03:59:21 -0400] \"HEAD / HTTP/1.0\" 200 0",
+   "expected": {
+    "host": "ad12-010.compuserve.com",
+    "timestamp": "1995-07-01 03:59:21",
+    "log_date": "1995-07-01",
+    "log_hour": 3,
+    "http_method": "HEAD",
+    "resource_path": "/",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 200,
+    "bytes_transferred": 0
+   }
+  },
+  {
+   "id": "post_method",
+   "description": "real: POST request",
+   "line": "204.212.153.234 - - [01/Jul/1995:00:51:19 -0400] \"POST /cgi-bin/newwvn-mail.pl HTTP/1.0\" 200 703",
+   "expected": {
+    "host": "204.212.153.234",
+    "timestamp": "1995-07-01 00:51:19",
+    "log_date": "1995-07-01",
+    "log_hour": 0,
+    "http_method": "POST",
+    "resource_path": "/cgi-bin/newwvn-mail.pl",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 200,
+    "bytes_transferred": 703
+   }
+  },
+  {
+   "id": "status_500",
+   "description": "real: 5xx is an error for Q3",
+   "line": "163.205.1.45 - - [03/Jul/1995:10:49:40 -0400] \"GET /cgi-bin/geturlstats.pl HTTP/1.0\" 500 0",
+   "expected": {
+    "host": "163.205.1.45",
+    "timestamp": "1995-07-03 10:49:40",
+    "log_date": "1995-07-03",
+    "log_hour": 10,
+    "http_method": "GET",
+    "resource_path": "/cgi-bin/geturlstats.pl",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 500,
+    "bytes_transferred": 0
+   }
+  },
+  {
+   "id": "query_string_kept",
+   "description": "real: query string is part of resource_path",
+   "line": "slip8124.rmii.com - - [25/Aug/1995:07:00:45 -0400] \"GET /cgi-bin/imagemap/countdown69?287,283 HTTP/V1.0\" 302 85",
+   "expected": {
+    "host": "slip8124.rmii.com",
+    "timestamp": "1995-08-25 07:00:45",
+    "log_date": "1995-08-25",
+    "log_hour": 7,
+    "http_method": "GET",
+    "resource_path": "/cgi-bin/imagemap/countdown69?287,283",
+    "protocol_version": "HTTP/V1.0",
+    "status_code": 302,
+    "bytes_transferred": 85
+   }
+  },
+  {
+   "id": "host_uppercase",
+   "description": "real: host kept exactly as written (case-sensitive)",
+   "line": "UNKNOWN_HOST - - [01/Jul/1995:04:11:55 -0400] \"GET /history/apollo/images/footprint-small.gif HTTP/1.0\" 200 0",
+   "expected": {
+    "host": "UNKNOWN_HOST",
+    "timestamp": "1995-07-01 04:11:55",
+    "log_date": "1995-07-01",
+    "log_hour": 4,
+    "http_method": "GET",
+    "resource_path": "/history/apollo/images/footprint-small.gif",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 200,
+    "bytes_transferred": 0
+   }
+  },
+  {
+   "id": "first_second_of_day",
+   "description": "synthetic: hour 00",
+   "line": "h1 - - [02/Jul/1995:00:00:00 -0400] \"GET / HTTP/1.0\" 200 7074",
+   "expected": {
+    "host": "h1",
+    "timestamp": "1995-07-02 00:00:00",
+    "log_date": "1995-07-02",
+    "log_hour": 0,
+    "http_method": "GET",
+    "resource_path": "/",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 200,
+    "bytes_transferred": 7074
+   }
+  },
+  {
+   "id": "last_second_of_day",
+   "description": "synthetic: hour 23, no timezone conversion (local -0400 time kept)",
+   "line": "h1 - - [31/Jul/1995:23:59:59 -0400] \"GET / HTTP/1.0\" 200 7074",
+   "expected": {
+    "host": "h1",
+    "timestamp": "1995-07-31 23:59:59",
+    "log_date": "1995-07-31",
+    "log_hour": 23,
+    "http_method": "GET",
+    "resource_path": "/",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 200,
+    "bytes_transferred": 7074
+   }
+  },
+  {
+   "id": "no_protocol",
+   "description": "real: HTTP/0.9-style request, protocol NULL",
+   "line": "pipe3.nyc.pipeline.com - - [06/Aug/1995:21:48:23 -0400] \"GET /images/launchmedium.gif\" 200 11853",
+   "expected": {
+    "host": "pipe3.nyc.pipeline.com",
+    "timestamp": "1995-08-06 21:48:23",
+    "log_date": "1995-08-06",
+    "log_hour": 21,
+    "http_method": "GET",
+    "resource_path": "/images/launchmedium.gif",
+    "protocol_version": null,
+    "status_code": 200,
+    "bytes_transferred": 11853
+   }
+  },
+  {
+   "id": "multi_space_before_protocol",
+   "description": "real: runs of spaces are one separator",
+   "line": "192.138.179.202 - - [12/Aug/1995:18:21:45 -0400] \"GET /shuttle/countdown/count.html   HTTP/1.0\" 200 73231",
+   "expected": {
+    "host": "192.138.179.202",
+    "timestamp": "1995-08-12 18:21:45",
+    "log_date": "1995-08-12",
+    "log_hour": 18,
+    "http_method": "GET",
+    "resource_path": "/shuttle/countdown/count.html",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 200,
+    "bytes_transferred": 73231
+   }
+  },
+  {
+   "id": "trailing_space_in_request",
+   "description": "real: trailing spaces inside the quotes ignored",
+   "line": "ix-or10-10.ix.netcom.com - - [20/Aug/1995:00:23:41 -0400] \"GET /ksc.html HTTP/1.0 \" 200 7131",
+   "expected": {
+    "host": "ix-or10-10.ix.netcom.com",
+    "timestamp": "1995-08-20 00:23:41",
+    "log_date": "1995-08-20",
+    "log_hour": 0,
+    "http_method": "GET",
+    "resource_path": "/ksc.html",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 200,
+    "bytes_transferred": 7131
+   }
+  },
+  {
+   "id": "protocol_HTTP_V1_0",
+   "description": "real: protocol kept as written",
+   "line": "133.95.127.5 - - [21/Aug/1995:05:45:18 -0400] \"GET /shuttle/missions/missions.html HTTP/V1.0\" 200 8677",
+   "expected": {
+    "host": "133.95.127.5",
+    "timestamp": "1995-08-21 05:45:18",
+    "log_date": "1995-08-21",
+    "log_hour": 5,
+    "http_method": "GET",
+    "resource_path": "/shuttle/missions/missions.html",
+    "protocol_version": "HTTP/V1.0",
+    "status_code": 200,
+    "bytes_transferred": 8677
+   }
+  },
+  {
+   "id": "protocol_HTTP_star",
+   "description": "real: protocol kept as written",
+   "line": "beta.di.uminho.pt - - [19/Jul/1995:06:46:16 -0400] \"GET /ksc.html HTTP/*\" 200 7071",
+   "expected": {
+    "host": "beta.di.uminho.pt",
+    "timestamp": "1995-07-19 06:46:16",
+    "log_date": "1995-07-19",
+    "log_hour": 6,
+    "http_method": "GET",
+    "resource_path": "/ksc.html",
+    "protocol_version": "HTTP/*",
+    "status_code": 200,
+    "bytes_transferred": 7071
+   }
+  },
+  {
+   "id": "space_inside_path",
+   "description": "real: path = everything between method and protocol",
+   "line": "derose.mel.dah.csiro.au - - [22/Aug/1995:22:15:36 -0400] \"GET / ksc.html HTTP/1.0\" 200 7087",
+   "expected": {
+    "host": "derose.mel.dah.csiro.au",
+    "timestamp": "1995-08-22 22:15:36",
+    "log_date": "1995-08-22",
+    "log_hour": 22,
+    "http_method": "GET",
+    "resource_path": "/ ksc.html",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 200,
+    "bytes_transferred": 7087
+   }
+  },
+  {
+   "id": "many_spaces_inside_path",
+   "description": "real: inner spacing of the path is kept",
+   "line": "ara2.acs.muohio.edu - - [07/Aug/1995:20:40:00 -0400] \"GET /history/apollo/apollo-13/apollo1-.html    apollo-1 HTTP/1.0\" 404 -",
+   "expected": {
+    "host": "ara2.acs.muohio.edu",
+    "timestamp": "1995-08-07 20:40:00",
+    "log_date": "1995-08-07",
+    "log_hour": 20,
+    "http_method": "GET",
+    "resource_path": "/history/apollo/apollo-13/apollo1-.html    apollo-1",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 404,
+    "bytes_transferred": 0
+   }
+  },
+  {
+   "id": "quote_inside_request",
+   "description": "real: quotes inside the request; request runs to the LAST '\" ' before the status",
+   "line": "userp2.snowhill.com - - [05/Aug/1995:14:57:06 -0400] \"GET / \" HTTP/1.0\" 200 7034",
+   "expected": {
+    "host": "userp2.snowhill.com",
+    "timestamp": "1995-08-05 14:57:06",
+    "log_date": "1995-08-05",
+    "log_hour": 14,
+    "http_method": "GET",
+    "resource_path": "/ \"",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 200,
+    "bytes_transferred": 7034
+   }
+  },
+  {
+   "id": "quote_inside_path",
+   "description": "real",
+   "line": "jhanley.doe.state.la.us - - [08/Aug/1995:11:24:31 -0400] \"GET /ksc.html\" HTTP/1.0\" 404 -",
+   "expected": {
+    "host": "jhanley.doe.state.la.us",
+    "timestamp": "1995-08-08 11:24:31",
+    "log_date": "1995-08-08",
+    "log_hour": 11,
+    "http_method": "GET",
+    "resource_path": "/ksc.html\"",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 404,
+    "bytes_transferred": 0
+   }
+  },
+  {
+   "id": "html_junk_no_protocol",
+   "description": "real: no protocol, path is the rest",
+   "line": "queen.torfree.net - - [10/Aug/1995:13:53:17 -0400] \"GET /ksc.html>NASA HOME PAGE</a><br> You Gotta Love Those Space Ships\" 404 -",
+   "expected": {
+    "host": "queen.torfree.net",
+    "timestamp": "1995-08-10 13:53:17",
+    "log_date": "1995-08-10",
+    "log_hour": 13,
+    "http_method": "GET",
+    "resource_path": "/ksc.html>NASA HOME PAGE</a><br> You Gotta Love Those Space Ships",
+    "protocol_version": null,
+    "status_code": 404,
+    "bytes_transferred": 0
+   }
+  },
+  {
+   "id": "lowercase_http_last_token",
+   "description": "real: last token 'http://...' is not a protocol",
+   "line": "shop.demon.co.uk - - [19/Aug/1995:18:00:35 -0400] \"GET http://www.ksc.nasa.gov\" 404 -",
+   "expected": {
+    "host": "shop.demon.co.uk",
+    "timestamp": "1995-08-19 18:00:35",
+    "log_date": "1995-08-19",
+    "log_hour": 18,
+    "http_method": "GET",
+    "resource_path": "http://www.ksc.nasa.gov",
+    "protocol_version": null,
+    "status_code": 404,
+    "bytes_transferred": 0
+   }
+  },
+  {
+   "id": "no_path",
+   "description": "real: method + protocol, resource_path NULL (excluded from Q2)",
+   "line": "jumbo.jet.uk - - [11/Jul/1995:08:06:29 -0400] \"GET  HTTP/1.0\" 302 -",
+   "expected": {
+    "host": "jumbo.jet.uk",
+    "timestamp": "1995-07-11 08:06:29",
+    "log_date": "1995-07-11",
+    "log_hour": 8,
+    "http_method": "GET",
+    "resource_path": null,
+    "protocol_version": "HTTP/1.0",
+    "status_code": 302,
+    "bytes_transferred": 0
+   }
+  },
+  {
+   "id": "no_method_path_only",
+   "description": "real: no HTTP method -> method/path/protocol all NULL, record still PARSED",
+   "line": "bloor.torfree.net - - [22/Aug/1995:14:55:16 -0400] \"huttle/countdown/\" 400 -",
+   "expected": {
+    "host": "bloor.torfree.net",
+    "timestamp": "1995-08-22 14:55:16",
+    "log_date": "1995-08-22",
+    "log_hour": 14,
+    "http_method": null,
+    "resource_path": null,
+    "protocol_version": null,
+    "status_code": 400,
+    "bytes_transferred": 0
+   }
+  },
+  {
+   "id": "no_method_digit_start",
+   "description": "real: first token not [A-Z]+ -> all NULL",
+   "line": "firewall.dfw.ibm.com - - [20/Jul/1995:07:34:34 -0400] \"1/history/apollo/images/\" 400 -",
+   "expected": {
+    "host": "firewall.dfw.ibm.com",
+    "timestamp": "1995-07-20 07:34:34",
+    "log_date": "1995-07-20",
+    "log_hour": 7,
+    "http_method": null,
+    "resource_path": null,
+    "protocol_version": null,
+    "status_code": 400,
+    "bytes_transferred": 0
+   }
+  },
+  {
+   "id": "binary_junk_request",
+   "description": "real: control bytes only -> all NULL, record still PARSED",
+   "line": "klothos.crl.research.digital.com - - [10/Jul/1995:16:45:50 -0400] \"\u0005\u0001\" 400 -",
+   "expected": {
+    "host": "klothos.crl.research.digital.com",
+    "timestamp": "1995-07-10 16:45:50",
+    "log_date": "1995-07-10",
+    "log_hour": 16,
+    "http_method": null,
+    "resource_path": null,
+    "protocol_version": null,
+    "status_code": 400,
+    "bytes_transferred": 0
+   }
+  },
+  {
+   "id": "only_method",
+   "description": "synthetic",
+   "line": "h2 - - [01/Jul/1995:10:00:00 -0400] \"GET\" 200 10",
+   "expected": {
+    "host": "h2",
+    "timestamp": "1995-07-01 10:00:00",
+    "log_date": "1995-07-01",
+    "log_hour": 10,
+    "http_method": "GET",
+    "resource_path": null,
+    "protocol_version": null,
+    "status_code": 200,
+    "bytes_transferred": 10
+   }
+  },
+  {
+   "id": "empty_request",
+   "description": "synthetic",
+   "line": "h2 - - [01/Jul/1995:10:00:00 -0400] \"\" 400 -",
+   "expected": {
+    "host": "h2",
+    "timestamp": "1995-07-01 10:00:00",
+    "log_date": "1995-07-01",
+    "log_hour": 10,
+    "http_method": null,
+    "resource_path": null,
+    "protocol_version": null,
+    "status_code": 400,
+    "bytes_transferred": 0
+   }
+  },
+  {
+   "id": "lowercase_method",
+   "description": "synthetic: method must be [A-Z]+",
+   "line": "h2 - - [01/Jul/1995:10:00:00 -0400] \"get /x HTTP/1.0\" 200 10",
+   "expected": {
+    "host": "h2",
+    "timestamp": "1995-07-01 10:00:00",
+    "log_date": "1995-07-01",
+    "log_hour": 10,
+    "http_method": null,
+    "resource_path": null,
+    "protocol_version": null,
+    "status_code": 200,
+    "bytes_transferred": 10
+   }
+  },
+  {
+   "id": "protocol_not_last",
+   "description": "synthetic: protocol only if it is the LAST token",
+   "line": "h2 - - [01/Jul/1995:10:00:00 -0400] \"GET /a HTTP/1.0 extra\" 200 10",
+   "expected": {
+    "host": "h2",
+    "timestamp": "1995-07-01 10:00:00",
+    "log_date": "1995-07-01",
+    "log_hour": 10,
+    "http_method": "GET",
+    "resource_path": "/a HTTP/1.0 extra",
+    "protocol_version": null,
+    "status_code": 200,
+    "bytes_transferred": 10
+   }
+  },
+  {
+   "id": "method_then_protocol_then_more",
+   "description": "synthetic",
+   "line": "h2 - - [01/Jul/1995:10:00:00 -0400] \"GET HTTP/1.0 /x\" 200 10",
+   "expected": {
+    "host": "h2",
+    "timestamp": "1995-07-01 10:00:00",
+    "log_date": "1995-07-01",
+    "log_hour": 10,
+    "http_method": "GET",
+    "resource_path": "HTTP/1.0 /x",
+    "protocol_version": null,
+    "status_code": 200,
+    "bytes_transferred": 10
+   }
+  },
+  {
+   "id": "leading_space_in_request",
+   "description": "synthetic",
+   "line": "h2 - - [01/Jul/1995:10:00:00 -0400] \" GET /x HTTP/1.0\" 200 10",
+   "expected": {
+    "host": "h2",
+    "timestamp": "1995-07-01 10:00:00",
+    "log_date": "1995-07-01",
+    "log_hour": 10,
+    "http_method": "GET",
+    "resource_path": "/x",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 200,
+    "bytes_transferred": 10
+   }
+  },
+  {
+   "id": "tab_and_formfeed_in_path",
+   "description": "synthetic (a real line has these plus non-ASCII bytes): only ' ' separates tokens",
+   "line": "h2 - - [07/Jul/1995:17:49:26 -0400] \"GET /orbiters/b\t\f HTTP/1.0\" 404 -",
+   "expected": {
+    "host": "h2",
+    "timestamp": "1995-07-07 17:49:26",
+    "log_date": "1995-07-07",
+    "log_hour": 17,
+    "http_method": "GET",
+    "resource_path": "/orbiters/b\t\f",
+    "protocol_version": "HTTP/1.0",
+    "status_code": 404,
+    "bytes_transferred": 0
+   }
+  },
+  {
+   "id": "protocol_glued_to_path",
+   "description": "synthetic",
+   "line": "h2 - - [01/Jul/1995:10:00:00 -0400] \"GET /aHTTP/1.0\" 200 10",
+   "expected": {
+    "host": "h2",
+    "timestamp": "1995-07-01 10:00:00",
+    "log_date": "1995-07-01",
+    "log_hour": 10,
+    "http_method": "GET",
+    "resource_path": "/aHTTP/1.0",
+    "protocol_version": null,
+    "status_code": 200,
+    "bytes_transferred": 10
+   }
+  },
+  {
+   "id": "truncated_line",
+   "description": "real: last line of the Jul95 file (no trailing newline)",
+   "line": "alyssa.p",
+   "expected": null
+  },
+  {
+   "id": "empty_line",
+   "description": "synthetic",
+   "line": "",
+   "expected": null
+  },
+  {
+   "id": "bad_month",
+   "description": "synthetic",
+   "line": "h3 - - [01/Foo/1995:10:00:00 -0400] \"GET / HTTP/1.0\" 200 10",
+   "expected": null
+  },
+  {
+   "id": "month_wrong_case",
+   "description": "synthetic",
+   "line": "h3 - - [01/JUL/1995:10:00:00 -0400] \"GET / HTTP/1.0\" 200 10",
+   "expected": null
+  },
+  {
+   "id": "day_00",
+   "description": "synthetic",
+   "line": "h3 - - [00/Jul/1995:10:00:00 -0400] \"GET / HTTP/1.0\" 200 10",
+   "expected": null
+  },
+  {
+   "id": "hour_24",
+   "description": "synthetic",
+   "line": "h3 - - [01/Jul/1995:24:00:00 -0400] \"GET / HTTP/1.0\" 200 10",
+   "expected": null
+  },
+  {
+   "id": "single_digit_day",
+   "description": "synthetic",
+   "line": "h3 - - [1/Jul/1995:10:00:00 -0400] \"GET / HTTP/1.0\" 200 10",
+   "expected": null
+  },
+  {
+   "id": "missing_timezone",
+   "description": "synthetic",
+   "line": "h3 - - [01/Jul/1995:10:00:00] \"GET / HTTP/1.0\" 200 10",
+   "expected": null
+  },
+  {
+   "id": "status_two_digits",
+   "description": "synthetic",
+   "line": "h3 - - [01/Jul/1995:10:00:00 -0400] \"GET / HTTP/1.0\" 20 10",
+   "expected": null
+  },
+  {
+   "id": "status_non_numeric",
+   "description": "synthetic",
+   "line": "h3 - - [01/Jul/1995:10:00:00 -0400] \"GET / HTTP/1.0\" 2OO 10",
+   "expected": null
+  },
+  {
+   "id": "bytes_non_numeric",
+   "description": "synthetic",
+   "line": "h3 - - [01/Jul/1995:10:00:00 -0400] \"GET / HTTP/1.0\" 200 12a",
+   "expected": null
+  },
+  {
+   "id": "bytes_negative",
+   "description": "synthetic",
+   "line": "h3 - - [01/Jul/1995:10:00:00 -0400] \"GET / HTTP/1.0\" 200 -5",
+   "expected": null
+  },
+  {
+   "id": "bytes_missing",
+   "description": "synthetic",
+   "line": "h3 - - [01/Jul/1995:10:00:00 -0400] \"GET / HTTP/1.0\" 200",
+   "expected": null
+  },
+  {
+   "id": "trailing_space_after_bytes",
+   "description": "synthetic: nothing is trimmed",
+   "line": "h3 - - [01/Jul/1995:10:00:00 -0400] \"GET / HTTP/1.0\" 200 10 ",
+   "expected": null
+  },
+  {
+   "id": "leading_space",
+   "description": "synthetic: nothing is trimmed",
+   "line": " h3 - - [01/Jul/1995:10:00:00 -0400] \"GET / HTTP/1.0\" 200 10",
+   "expected": null
+  },
+  {
+   "id": "request_not_quoted",
+   "description": "synthetic",
+   "line": "h3 - - [01/Jul/1995:10:00:00 -0400] GET / HTTP/1.0 200 10",
+   "expected": null
+  },
+  {
+   "id": "tab_separator",
+   "description": "synthetic: fields are separated by single spaces only",
+   "line": "h3\t-\t- [01/Jul/1995:10:00:00 -0400] \"GET / HTTP/1.0\" 200 10",
+   "expected": null
+  },
+  {
+   "id": "double_space_between_fields",
+   "description": "synthetic",
+   "line": "h3 - -  [01/Jul/1995:10:00:00 -0400] \"GET / HTTP/1.0\" 200 10",
+   "expected": null
+  }
+ ]
+}

@@ -1,0 +1,3 @@
+psycopg2-binary>=2.9
+# MongoDB pipeline only:
+pymongo>=4.6

@@ -1,0 +1,21 @@
+# dataset + run artefacts (never commit)
+data/
+work/
+batches/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# java / hadoop build output
+*.class
+target/
+*.jar
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
